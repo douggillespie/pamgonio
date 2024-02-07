@@ -1,15 +1,15 @@
-package pamgoniometer;
+package fastlocdisplay;
 
 import PamModel.PamDependency;
 import PamModel.PamPluginInterface;
 
-public class GoniometerPlugin implements PamPluginInterface {
+public class FastlocViewPlugin implements PamPluginInterface {
 
 	private String jarFile;
 
 	@Override
 	public String getDefaultName() {
-		return "Goniometer display";
+		return "Fastloc tag display";
 	}
 
 	@Override
@@ -54,18 +54,17 @@ public class GoniometerPlugin implements PamPluginInterface {
 
 	@Override
 	public String getAboutText() {
-		return "Receive goniometer data";
+		return "Receive goniometer data to display Fastloc GPS tag data";
 	}
 
 	@Override
 	public String getClassName() {
-		return GoniometerControl.class.getName();
+		return FastlocViewControl.class.getName();
 	}
 
 	@Override
 	public String getDescription() {
-		// TODO Auto-generated method stub
-		return null;
+		return "Fastloc tag data display";
 	}
 
 	@Override
@@ -75,7 +74,7 @@ public class GoniometerPlugin implements PamPluginInterface {
 
 	@Override
 	public String getToolTip() {
-		return "Read goniometer AIS data";
+		return "Read goniometer data from Fastloc tags and integrate into PAMGuard databases and displays";
 	}
 
 	@Override

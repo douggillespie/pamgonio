@@ -39,11 +39,11 @@ import clickDetector.ClickDetection;
 import dataMap.DataMapControl;
 import detectiongrouplocaliser.DetectionGroupControl;
 import effortmonitor.EffortControl;
+import fastlocdisplay.FastlocViewPlugin;
 import whistlesAndMoans.AbstractWhistleDataUnit;
 import fftManager.FFTDataUnit;
 import fftManager.PamFFTControl;
 import group3dlocaliser.Group3DLocaliserControl;
-import pamgoniometer.GoniometerPlugin;
 import printscreen.PrintScreenControl;
 import rockBlock.RockBlockControl;
 import turbineops.TurbineOperationControl;
@@ -1065,7 +1065,7 @@ final public class PamModel implements PamModelInterface, PamSettings {
 		pluginList.clear();
 		daqList.clear();
 		
-		pluginList.add(new GoniometerPlugin());
+		pluginList.add(new FastlocViewPlugin());
 
 		// Load up whatever default classloader was used to create this class.  Must use the same classloader
 		// for all plugins, or else we will not be able to create proper dependencies between them or be able

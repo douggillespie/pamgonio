@@ -1,10 +1,11 @@
-package pamgoniometer.aisfile;
+package fastlocdisplay.aisfile;
 
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import AIS.AISPositionReport;
 import PamUtils.LatLong;
 import PamUtils.PamCalendar;
 
@@ -20,6 +21,8 @@ public class AISFileLineInfo {
 	private LatLong latLong;
 	private int integerId;
 	private int hexId;
+	private AISPositionReport positionReport;
+	private int errorCode;
 	
 
 	public AISFileLineInfo(long timeMillis, double lat, double lon, int integerId, int hexId) {
@@ -96,5 +99,61 @@ public class AISFileLineInfo {
 	@Override
 	public String toString() {
 		return String.format("%s,%6d,0x%07X,%s", PamCalendar.formatDBDateTime(timeMillis, true), integerId, hexId, latLong.toString());
+	}
+
+	/**
+	 * @return the positionReport
+	 */
+	public AISPositionReport getPositionReport() {
+		return positionReport;
+	}
+
+	/**
+	 * @param positionReport the positionReport to set
+	 */
+	public void setPositionReport(AISPositionReport positionReport) {
+		this.positionReport = positionReport;
+	}
+
+	/**
+	 * @return the errorCode
+	 */
+	public int getErrorCode() {
+		return errorCode;
+	}
+
+	/**
+	 * @param errorCode the errorCode to set
+	 */
+	public void setErrorCode(int errorCode) {
+		this.errorCode = errorCode;
+	}
+
+	/**
+	 * @return the timeMillis
+	 */
+	public long getTimeMillis() {
+		return timeMillis;
+	}
+
+	/**
+	 * @return the latLong
+	 */
+	public LatLong getLatLong() {
+		return latLong;
+	}
+
+	/**
+	 * @return the integerId
+	 */
+	public int getIntegerId() {
+		return integerId;
+	}
+
+	/**
+	 * @return the hexId
+	 */
+	public int getHexId() {
+		return hexId;
 	}
 }
