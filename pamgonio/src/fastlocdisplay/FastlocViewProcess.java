@@ -1,6 +1,10 @@
 package fastlocdisplay;
 
+import java.util.ArrayList;
+
 import PamController.PamControlledUnit;
+import PamController.PamController;
+import PamController.PamViewParameters;
 import PamguardMVC.PamProcess;
 import fastlocdisplay.aisfile.AISDataMonitor;
 import fastlocdisplay.aisfile.AISFileLineInfo;
@@ -17,13 +21,15 @@ public class FastlocViewProcess extends PamProcess implements AISDataMonitor {
 	
 	private FastAISDataBlock fastAISDataBlock;
 
+	private FastAISLogging fastAISLogging;
+
 	public FastlocViewProcess(FastlocViewControl fastlocViewControl) {
 		super(fastlocViewControl, null);
 		this.fastlocViewControl = fastlocViewControl;
 		
 		fastAISDataBlock = new FastAISDataBlock(this);
 		addOutputDataBlock(fastAISDataBlock);
-		fastAISDataBlock.SetLogging(new FastAISLogging(fastAISDataBlock));
+		fastAISDataBlock.SetLogging(fastAISLogging = new FastAISLogging(fastAISDataBlock));
 		
 		fastStationDataBlock = new FastStationDataBlock(this);
 		addOutputDataBlock(fastStationDataBlock);
@@ -56,16 +62,53 @@ public class FastlocViewProcess extends PamProcess implements AISDataMonitor {
 		if (aisDataLine.getErrorCode() > 0) {
 			return;
 		}
+		// get the last time for that station from the database. 
+		long lastStationTime = 0;
+		FastAISDataUnit lastData = fastAISLogging.getLastDataUnit(aisDataLine.getIntegerId());
+		if (lastData != null) {
+			lastStationTime = lastData.getTimeMilliseconds();
+			if (aisDataLine.getTimeMillis() <= lastStationTime) {
+				// this record should already be in the database, so don't do anything. 
+				return;
+			}
+		}
+		
 		FastAISDataUnit aisDataUnit = new FastAISDataUnit(aisDataLine);
 		fastAISDataBlock.addPamData(aisDataUnit);
-		FastStationDataUnit exUnit = fastStationDataBlock.findStationDataUnit(aisDataLine.getIntegerId());
+		linkToStation(aisDataUnit);
+	}
+
+	@Override
+	public void notifyModelChanged(int changeType) {
+		super.notifyModelChanged(changeType);
+		if (changeType == PamController.INITIALIZATION_COMPLETE) {
+			fastAISLogging.loadEarlyData(new PamViewParameters(0, System.currentTimeMillis()));
+			fastAISDataBlock.sortData();
+			relinkStations();
+		}
+	}
+
+	/**
+	 * Called after a load of offline data to relink the AIS reports
+	 * to stations. 
+	 */
+	private void relinkStations() {
+		fastStationDataBlock.clearAll();
+		ArrayList<FastAISDataUnit> data = fastAISDataBlock.getDataCopy();
+		for (FastAISDataUnit aData : data) {
+			linkToStation(aData);
+		}
+	}
+	
+	private void linkToStation(FastAISDataUnit aisDataUnit) {
+		FastStationDataUnit exUnit = fastStationDataBlock.findStationDataUnit(aisDataUnit.getIntegerId());
 		if (exUnit == null) {
 			exUnit = new FastStationDataUnit(aisDataUnit);
 			fastStationDataBlock.addPamData(exUnit);
 		}
 		else {
 			exUnit.addSubDetection(aisDataUnit);
-			fastStationDataBlock.updatePamData(exUnit, aisDataLine.getTimeMillis());
+			fastStationDataBlock.updatePamData(exUnit, aisDataUnit.getTimeMilliseconds());
 		}
 	}
 

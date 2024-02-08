@@ -8,7 +8,7 @@ public class FastAISDataBlock extends PamDataBlock<FastAISDataUnit> {
 
 	public FastAISDataBlock(FastlocViewProcess fastLocViewProcess) {
 		super(FastAISDataUnit.class, "Fast AIS Positions", fastLocViewProcess, 0);
-		// TODO Auto-generated constructor stub
+		setClearAtStart(false);
 	}
 
 	@Override
@@ -26,6 +26,11 @@ public class FastAISDataBlock extends PamDataBlock<FastAISDataUnit> {
 	@Override
 	public String getHoverText(GeneralProjector generalProjector, PamDataUnit dataUnit, int iSide) {
 		return dataUnit.getSummaryString();
+	}
+	
+	@Override
+	public int getNumRequiredBeforeLoadTime() {
+		return 1000;
 	}
 
 }

@@ -28,6 +28,14 @@ public class FastAISDataUnit extends PamDataUnit<PamDataUnit, FastStationDataUni
 		this.setChannelBitmap(integerId);
 	}
 
+	public FastAISDataUnit(long timeMilliseconds, int integerId, int hexId, AISPositionReport positionReport) {
+		super(timeMilliseconds);
+		this.integerId = integerId;
+		this.hexId = hexId;
+		this.positionReport = positionReport;
+		this.setChannelBitmap(integerId);
+	}
+
 	/**
 	 * @return the integerId
 	 */

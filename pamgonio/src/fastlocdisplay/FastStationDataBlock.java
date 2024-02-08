@@ -17,6 +17,7 @@ public class FastStationDataBlock extends PamDataBlock<FastStationDataUnit> {
 
 	public FastStationDataBlock(FastlocViewProcess fastlocViewProcess) {
 		super(FastStationDataUnit.class, "Fstloc Locations", fastlocViewProcess, 0);
+		setClearAtStart(false);
 	}
 
 	@Override
@@ -51,9 +52,9 @@ public class FastStationDataBlock extends PamDataBlock<FastStationDataUnit> {
 
 	@Override
 	public void clearAll() {
-		if (PamController.getInstance().getRunMode() == PamController.RUN_NORMAL) {
-			return;
-		}
+//		if (PamController.getInstance().getRunMode() == PamController.RUN_NORMAL) {
+//			return;
+//		}
 		super.clearAll();
 	}
 

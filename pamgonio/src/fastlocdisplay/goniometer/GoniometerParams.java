@@ -7,6 +7,10 @@ public class GoniometerParams implements Serializable, Cloneable {
 	public static final long serialVersionUID = 1L;
 	
 	/**
+	 * Control the external software from within PAMGuard. 
+	 */
+	public boolean controlFastRealtime = true;
+	/**
 	 * Name of fast GPS Executable (probably won't ever change)
 	 */
 	public String fastGPSexe = "FastGPS_Realtime.exe";

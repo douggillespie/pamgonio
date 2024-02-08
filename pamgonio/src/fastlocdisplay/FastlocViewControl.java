@@ -44,6 +44,12 @@ public class FastlocViewControl extends PamControlledUnit {
 	public FastlocViewProcess getFastlocViewProcess() {
 		return fastlocViewProcess;
 	}
+
+	@Override
+	public void notifyModelChanged(int changeType) {
+		super.notifyModelChanged(changeType);
+		goniometerControl.notifyModelChanged(changeType);
+	}
 	
 
 }
