@@ -32,6 +32,7 @@ public class GoniometerDialog extends PamDialog {
 	private JButton browseButton;
 	private SerialPortPanel navPort, goniPort, outPort;
 	private SelectFolder outputFolder;
+	private JCheckBox debugOut;
 
 	private GoniometerDialog(Window parentFrame) {
 		super(parentFrame, "Goniometer Settings", true);
@@ -44,12 +45,14 @@ public class GoniometerDialog extends PamDialog {
 		goniPort = new SerialPortPanel("Goniometer", false, false, false, false, false);
 		outPort = new SerialPortPanel("Output port", false, false, false, false, false);
 		outputFolder = new SelectFolder("Output folder", 50, true);
+		debugOut = new JCheckBox("Show debug output");
 		outputFolder.setSubFolderButtonName("Put files into separate folders by date");
 		outputFolder.setSubFolderButtonToolTip("Sub folders will be automatically created for each date");
 		navPort.getPanel().setToolTipText("Com PORT for GPS ephemeris data input");
 		goniPort.getPanel().setToolTipText("Com PORT for Goniometer data input");
 		outPort.getPanel().setToolTipText("Com PORT for AIS data output");
 		controlRealtime.setToolTipText("If this is selected, PAMGuard will launch FastGPS_Realtime, otherwise it must be started manually in a terminal window!");
+		debugOut.setToolTipText("Launch FastGPS_Realtime with -d option");
 		
 		JPanel goniPanel = new JPanel(new GridBagLayout());
 		goniPanel.setBorder(new TitledBorder("Parameters for goniometer data collection and FastGPS_Realtime control"));
@@ -73,8 +76,11 @@ public class GoniometerDialog extends PamDialog {
 		goniPanel.add(browseButton, c);
 		c.gridy++;
 		c.gridx = 0;
-		c.gridwidth = 3;
+		c.gridwidth = 2;
 		goniPanel.add(new JLabel("COM Ports for Fastloc software", JLabel.LEFT), c);
+		c.gridx += c.gridwidth;
+		c.gridwidth = 1;
+		goniPanel.add(debugOut, c);
 		c.gridwidth = 1;
 		c.gridy++;
 		c.gridx=0;
@@ -120,6 +126,7 @@ public class GoniometerDialog extends PamDialog {
 		navPort.getPortList().setEnabled(isRT);
 		goniPort.getPortList().setEnabled(isRT);
 		outPort.getPortList().setEnabled(isRT);
+		debugOut.setEnabled(isRT);
 	}
 
 	protected void browseExecutable() {
@@ -146,6 +153,7 @@ public class GoniometerDialog extends PamDialog {
 		outPort.setPort(goniometerParams.outPort);
 		outputFolder.setFolderName(goniometerParams.outputDirectory);
 		outputFolder.setIncludeSubFolders(goniometerParams.autoDatedFolders);
+		debugOut.setSelected(goniometerParams.debugOutput);
 		
 		enableControls();
 	}
@@ -159,6 +167,7 @@ public class GoniometerDialog extends PamDialog {
 			if (exeFile == null || exeFile.exists() == false) {
 				return showWarning("you must select a valid FastGPS_Realtime.exe");
 			}
+			goniometerParams.debugOutput = debugOut.isSelected();
 			goniometerParams.navPort = navPort.getPort();
 			if (goniometerParams.navPort == null) {
 				return showWarning("you must select a valid COM port for navigation data");

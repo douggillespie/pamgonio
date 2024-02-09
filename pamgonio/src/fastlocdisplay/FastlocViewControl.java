@@ -50,6 +50,17 @@ public class FastlocViewControl extends PamControlledUnit {
 		super.notifyModelChanged(changeType);
 		goniometerControl.notifyModelChanged(changeType);
 	}
+
+	@Override
+	public boolean canClose() {
+		return super.canClose();
+	}
+
+	@Override
+	public void pamClose() {
+		goniometerControl.destroyEverything();
+		super.pamClose();
+	}
 	
 
 }

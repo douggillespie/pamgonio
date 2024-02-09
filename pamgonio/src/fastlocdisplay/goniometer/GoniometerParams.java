@@ -1,5 +1,6 @@
 package fastlocdisplay.goniometer;
 
+import java.io.File;
 import java.io.Serializable;
 
 public class GoniometerParams implements Serializable, Cloneable {
@@ -41,9 +42,22 @@ public class GoniometerParams implements Serializable, Cloneable {
 	public String outputDirectory; 
 	
 	/**
+	 * Set debug output flag on FastGPS_REaltime;
+	 */
+	public boolean debugOutput = true;
+	
+	/**
 	 * Automatically make dated sub folders. 
 	 */
 	public boolean autoDatedFolders = true;
+	
+	public File getExecutable() {
+		if (fastGPSFolder == null || fastGPSexe == null) {
+			return null;
+		}
+		File f = new File(fastGPSFolder + File.separator + fastGPSexe);
+		return f;
+	}
 
 	@Override
 	protected GoniometerParams clone() {

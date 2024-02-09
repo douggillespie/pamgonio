@@ -15,11 +15,12 @@ import PamController.PamSettingManager;
 import PamController.PamSettings;
 import fastlocdisplay.FastlocViewControl;
 import fastlocdisplay.aisfile.AISFileMonitor;
+import fastlocdisplay.swing.FastRTDisplay;
 import fastlocdisplay.swing.FastRTDisplayProvider;
 import fastlocdisplay.swing.GoniometerDialog;
 import userDisplay.UserDisplayControl;
 
-public class GoniometerControl implements PamSettings{
+public class GoniometerControl implements PamSettings, ProcessMonitor {
 
 	private FastlocViewControl fastLocControl;
 	
@@ -31,6 +32,10 @@ public class GoniometerControl implements PamSettings{
 
 	private ExtProcessControl processControl;
 	
+	private FastRTDisplay fastRTDisplay;
+	
+	private volatile boolean destroying = false;
+	
 	public GoniometerControl(FastlocViewControl fastLocControl) {
 		super();
 		this.fastLocControl = fastLocControl;
@@ -38,7 +43,7 @@ public class GoniometerControl implements PamSettings{
 		aisFileMonitor = new AISFileMonitor(fastLocControl.getFastlocViewProcess());
 		normalMode = PamController.getInstance().getRunMode() == PamController.RUN_NORMAL;
 		UserDisplayControl.addUserDisplayProvider(new FastRTDisplayProvider(this));
-		processControl = new ExtProcessControl();
+		processControl = new ExtProcessControl(this);
 	}
 
 	public JMenuItem getControlMenuItem(Window parentFrame) {
@@ -55,14 +60,11 @@ public class GoniometerControl implements PamSettings{
 	private void showGoniometerDialog(Window parentFrame) {
 		GoniometerParams newSettings = GoniometerDialog.showDialog(parentFrame, goniometerParams);
 		if (newSettings != null) {
-			relaunchReceiver();
+			goniometerParams = newSettings;
+			setupGoniometer();
 		}
 	}
-	
-	private void relaunchReceiver() {
-		// TODO Auto-generated method stub
-		
-	}
+
 
 	@Override
 	public String getUnitName() {
@@ -98,6 +100,18 @@ public class GoniometerControl implements PamSettings{
 		if (changeType == PamController.INITIALIZATION_COMPLETE) {
 			initialise();
 		}
+		if (changeType == PamController.DESTROY_EVERYTHING) {
+			destroyEverything();
+		}
+	}
+
+	public void destroyEverything() {
+		destroying = true;
+		try {
+			processControl.stopProcess();
+		} catch (GoniometerException e) {
+			e.printStackTrace();
+		}
 	}
 
 	private void initialise() {
@@ -113,26 +127,92 @@ public class GoniometerControl implements PamSettings{
 
 	protected void setupGoniometer() {
 		aisFileMonitor.setOptions(goniometerParams.outputDirectory, goniometerParams.autoDatedFolders, null);
-		checkFastRTProcess();
+		try {
+			processControl.stopProcess();
+		} catch (GoniometerException e) {
+			if (fastRTDisplay != null) {
+				fastRTDisplay.goniometerMessage("Exception", e.getMessage());
+			}
+		}
+		Thread t = new Thread(new FastGPSMonitor());
+		t.start();
 	}
 	
-	private String getExternalCommand() {
-		String exe = goniometerParams.fastGPSFolder + File.separator + goniometerParams.fastGPSexe;
-		File exeFile = new File(exe);
-		if (exeFile.exists() == false) {
-			return null;
-		}
-		String cmd = String.format("\"%s\" -n %s -o %s -oa %s -d -out \"%s\"", exe, goniometerParams.navPort,
-				goniometerParams.gonioComPort, goniometerParams.outPort, goniometerParams.outputDirectory);
-		return cmd;
-	}
+	private class FastGPSMonitor implements Runnable {
 
+		@Override
+		public void run() {
+			while (destroying == false) {
+				if (goniometerParams.controlFastRealtime) {
+					checkFastRTProcess();
+				}
+				try {
+					Thread.sleep(5000);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+		
+	}
+	
 	private void checkFastRTProcess() {
-		String command = getExternalCommand();
-		if (command == null) {
+		if (goniometerParams.controlFastRealtime == false) {
 			return;
 		}
-		processControl.launchProcess(command);
+		try {
+			if (processControl.processRunning() == false) {
+				processControl.relaunchProcess();
+			}
+		} catch (GoniometerException e) {
+			if (fastRTDisplay != null) {
+				fastRTDisplay.goniometerMessage("Exception", e.getMessage());
+			}
+		}
+	}
+
+	/**
+	 * @return the goniometerParams
+	 */
+	public GoniometerParams getGoniometerParams() {
+		return goniometerParams;
+	}
+
+	@Override
+	public void errorLine(String line) {
+		if (fastRTDisplay != null) {
+			fastRTDisplay.goniometerMessage("Error", line);
+		}
+	}
+
+	@Override
+	public void inputLine(String line) {
+		if (fastRTDisplay != null) {
+			fastRTDisplay.goniometerMessage("Input", line);
+		}
+		
+	}
+	
+	@Override
+	public void systemLine(String line) {
+		if (fastRTDisplay != null) {
+			fastRTDisplay.goniometerMessage("System", line);
+		}
+		
+	}
+
+	/**
+	 * @return the fastRTDisplay
+	 */
+	public FastRTDisplay getFastRTDisplay() {
+		return fastRTDisplay;
+	}
+
+	/**
+	 * @param fastRTDisplay the fastRTDisplay to set
+	 */
+	public void setFastRTDisplay(FastRTDisplay fastRTDisplay) {
+		this.fastRTDisplay = fastRTDisplay;
 	}
 	
 }

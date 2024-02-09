@@ -3,11 +3,14 @@ package fastlocdisplay.goniometer;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.lang.ProcessHandle.Info;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
@@ -18,13 +21,70 @@ import javax.swing.Timer;
 public class ProcessTest {
 
 	String cmd = "C:\\Windows\\system32\\cmd.exe";
+	String cmd2 = "C:\\ProgramData\\FastGPS Realtime Solution\\FastGPS_Realtime.exe";
+	String opDir = "C:\\PAMGuardTest\\Goniometer\\TestOutput";
 	
 	private volatile Process process;
+	private Thread inputThread, errorThread;
 	
 	public static void main(String[] args) {
-		new ProcessTest().test();
+		new ProcessTest().test3();
 	}
 	
+	private void test3() {
+		String[] cmds = new String[10];
+		cmds[0] = cmd2;
+		cmds[1] = "-d";
+		cmds[2] = "-n";
+		cmds[3] = "COM3";
+		cmds[4] = "-o";
+		cmds[5] = "COM5";
+		cmds[6] = "-oa";
+		cmds[7] = "COM9";
+		cmds[8] = "-out";
+		cmds[9] = opDir;
+//		cmds = Arrays.copyOf(cmds, 1);
+		ArrayList<String> commands = new ArrayList<>();
+		commands.add(cmd);
+		commands.add("/c");
+		for (int i = 0; i < 10; i++) {
+			commands.add(cmds[i]);
+		}
+		
+		ProcessBuilder pb = new ProcessBuilder(commands);
+		
+		try {
+			process = pb.start();
+			System.out.println("Started process" + process);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+//		try {
+//			Thread.sleep(10000);
+//		} catch (InterruptedException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
+//		System.
+//
+		InputStreamMonitor isr = new InputStreamMonitor("Input", process.getInputStream());
+		inputThread = new Thread(isr, "Input reader");
+		inputThread.start();
+		InputStreamMonitor esr = new InputStreamMonitor("Errors", process.getErrorStream());
+		errorThread = new Thread(esr, "Error Reader");
+		errorThread.start();
+		
+		try {
+			inputThread.join();
+			errorThread.join();
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		System.out.println("Program terminated");
+	}
+
 	private void test2() {
 		ProcessHandle cmdProc = findProcessHandle("cmd.exe");
 		if (cmdProc == null) {
@@ -36,7 +96,7 @@ public class ProcessTest {
 	}
 
 	private void test() {
-		timerAction();
+//		timerAction();
 		
 		Timer timer = new Timer(2000, new ActionListener() {
 			
@@ -45,32 +105,57 @@ public class ProcessTest {
 				timerAction();
 			}
 		});
-		timer.start();
 		
-		String[] cmds = {cmd};
+		String[] cmds = new String[10];
+		cmds[0] = cmd2;
+		cmds[1] = "-d";
+		cmds[2] = "-n";
+		cmds[3] = "COM3";
+		cmds[4] = "-o";
+		cmds[5] = "COM5";
+		cmds[6] = "-oa";
+		cmds[7] = "COM9";
+		cmds[8] = "-out";
+		cmds[9] = opDir;
+		cmds = Arrays.copyOf(cmds, 4);
 		try {
 			// a process launched this way will exit when PAMGuard exits. 
 			process = Runtime.getRuntime().exec(cmds, null, null);
+			// wait a few seconds for it to launch
+			for (int i = 0; i < 50; i++) {
+				if (process.isAlive()) {
+					break;
+				}
+				Thread.sleep(10);
+			}
 		} catch (IOException e) {
 			e.printStackTrace();
+		} catch (InterruptedException e1) {
+			e1.printStackTrace();
 		}
-		System.out.println("Result: " + process.toString());
+		System.out.printf("Program status %s - %s\n", process.isAlive() ? "Running" : "Dead", process.toString());
+		timer.start();
 		InputStreamMonitor isr = new InputStreamMonitor("Input", process.getInputStream());
-		Thread t = new Thread(isr);
-		t.start();
+		inputThread = new Thread(isr, "Input reader");
+		inputThread.start();
+		InputStreamMonitor esr = new InputStreamMonitor("Errors", process.getErrorStream());
+		errorThread = new Thread(esr, "Error Reader");
+		errorThread.start();
+		
 		try {
-			t.join();
+			inputThread.join();
+			errorThread.join();
 		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		System.out.println("Program temrinated");
+		System.out.println("Program terminated");
 	}
 
 	int callCount = 0;
 	protected void timerAction() {
-		if (callCount++ == 0) {
-			ProcessHandle procHandle = findProcessHandle("cmd.exe");
+		if (callCount++ <1) {
+			ProcessHandle procHandle = findProcessHandle("FastGPS_Realtime.exe");
 			if (procHandle != null) {
 				System.out.println("Found " + procHandle.pid() + " " + procHandle.info());
 				Optional<ProcessHandle> parentH = procHandle.parent();
@@ -81,10 +166,26 @@ public class ProcessTest {
 				}
 			}
 			else {
-				System.out.println("Unable to find cmd.exe");
+				System.out.println("Unable to find FastGPS_Realtime.exe");
 			}
 		}
-		System.out.println("Time check: " + process.info().command());
+		if (process != null) {
+			boolean alive = process.isAlive();
+			if (alive == false) {
+//					try {
+//						process.getInputStream().close();
+//					} catch (IOException e) {
+//						// TODO Auto-generated catch block
+//						e.printStackTrace();
+//					}
+//				if (inputThread != null) {
+//					inputThread.interrupt();
+//					inputThread.;
+//				}
+//					isr.close();
+			}
+//			System.out.printf("Time check proc %s %s\n", process.info(), process.info().command());
+		}
 		
 	}
 
@@ -165,6 +266,11 @@ public class ProcessTest {
 		private String streamType;
 		
 		private InputStream inputStream;
+
+		private BufferedReader bufferedReader;
+		
+		InputStreamReader isr ;
+
 		
 		public InputStreamMonitor(String streamType, InputStream inputStream) {
 			super();
@@ -174,21 +280,38 @@ public class ProcessTest {
 
 		@Override
 		public void run() {
-			InputStreamReader isr = new InputStreamReader(inputStream);
-			BufferedReader bufferedReader = new BufferedReader(isr);
+			isr = new InputStreamReader(inputStream);
+			bufferedReader = new BufferedReader(isr);
 			String line;
 			try {
-				System.out.println("Input stream entered");
+				System.out.println(streamType + " stream entered");
+				int n = 0;
+				int ch;
+				char[] chBuf = new char[1];
+//				while (2>1) {
+//					while(isr.read(chBuf)>0) {
+//						System.out.print(chBuf[0]);
+//					}
+//				}
 				while ((line = bufferedReader.readLine()) != null) {
-					System.out.println(line);
+					n++;
+					System.out.println(streamType + ":" + line);
 				}
-				System.out.println("Input stream exited");
-				/*
-				 *  will exit to here when the process ends without throwing exception so shouldn't 
-				 *  really use this to set complete. Need to do that using a more sophisticated 
-				 *  process monitor. 
-				 */
-//				getBatchDataUnit().getBatchJobInfo().jobStatus = BatchJobStatus.COMPLETE;
+				//				while ((line = isr. .readLine()) != null) {
+//					n++;
+////					if (inputStream.available() > 0) {
+////						;
+//						System.out.println(streamType + ":" + line);
+////					}
+////					else {
+////						try {
+////							Thread.sleep(1);
+////						} catch (InterruptedException e) {
+////						}
+////					}
+//				}
+				System.out.printf("Stream %s exited after %d lines, process %s\n", streamType, n, process.isAlive() ? "Alive" : "Dead");
+
 			}
 			catch (IOException e) {
 				System.out.println("Input stream terminated");

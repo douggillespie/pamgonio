@@ -101,7 +101,7 @@ public class AISFileMonitor {
 			try {
 				Thread.sleep(5000);
 			} catch (InterruptedException e) {
-				e.printStackTrace();
+//				e.printStackTrace();
 			}			
 		}
 	}
