@@ -6,6 +6,7 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.Serializable;
 
+import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.SwingUtilities;
 
@@ -13,8 +14,11 @@ import PamController.PamControlledUnitSettings;
 import PamController.PamController;
 import PamController.PamSettingManager;
 import PamController.PamSettings;
+import PamView.dialog.warn.WarnOnce;
 import fastlocdisplay.FastlocViewControl;
+import fastlocdisplay.FastlocViewProcess;
 import fastlocdisplay.aisfile.AISFileMonitor;
+import fastlocdisplay.goniometer.stations.StationsFileManager;
 import fastlocdisplay.swing.FastRTDisplay;
 import fastlocdisplay.swing.FastRTDisplayProvider;
 import fastlocdisplay.swing.GoniometerDialog;
@@ -36,9 +40,12 @@ public class GoniometerControl implements PamSettings, ProcessMonitor {
 	
 	private volatile boolean destroying = false;
 	
+	private StationsFileManager stationsFileManager;
+	
 	public GoniometerControl(FastlocViewControl fastLocControl) {
 		super();
 		this.fastLocControl = fastLocControl;
+		stationsFileManager = new StationsFileManager(this);
 		PamSettingManager.getInstance().registerSettings(this);
 		aisFileMonitor = new AISFileMonitor(fastLocControl.getFastlocViewProcess());
 		normalMode = PamController.getInstance().getRunMode() == PamController.RUN_NORMAL;
@@ -47,14 +54,19 @@ public class GoniometerControl implements PamSettings, ProcessMonitor {
 	}
 
 	public JMenuItem getControlMenuItem(Window parentFrame) {
-		JMenuItem menuItem = new JMenuItem("Goniometer Control");
+		JMenu menu = new JMenu("Goniometer");
+		
+		JMenuItem menuItem = new JMenuItem("Goniometer settings");
 		menuItem.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				showGoniometerDialog(parentFrame);
 			}
 		});
-		return menuItem;
+		menu.add(menuItem);
+		menu.add(stationsFileManager.getDialogMenuItem(parentFrame));
+		
+		return menu;
 	}
 
 	private void showGoniometerDialog(Window parentFrame) {
@@ -143,7 +155,7 @@ public class GoniometerControl implements PamSettings, ProcessMonitor {
 		@Override
 		public void run() {
 			while (destroying == false) {
-				if (goniometerParams.controlFastRealtime) {
+				if (goniometerParams.controlFastRealtime>0) {
 					checkFastRTProcess();
 				}
 				try {
@@ -157,7 +169,7 @@ public class GoniometerControl implements PamSettings, ProcessMonitor {
 	}
 	
 	private void checkFastRTProcess() {
-		if (goniometerParams.controlFastRealtime == false) {
+		if (goniometerParams.controlFastRealtime == 0) {
 			return;
 		}
 		try {
@@ -214,5 +226,33 @@ public class GoniometerControl implements PamSettings, ProcessMonitor {
 	public void setFastRTDisplay(FastRTDisplay fastRTDisplay) {
 		this.fastRTDisplay = fastRTDisplay;
 	}
+
+	/**
+	 * @return the processControl
+	 */
+	public ExtProcessControl getProcessControl() {
+		return processControl;
+	}
+
+	/**
+	 * @return the fastLocControl
+	 */
+	public FastlocViewControl getFastLocControl() {
+		return fastLocControl;
+	}
 	
+	/**
+	 * Get the main process, from where it's possible to access datablocks, etc. 
+	 * @return
+	 */
+	public FastlocViewProcess getFastlocViewProcess() {
+		return fastLocControl.getFastlocViewProcess();
+	}
+
+	/**
+	 * Called when the goniometer stations list has been updated. 
+	 */
+	public void updateStationList() {
+		processControl.updateStationsList();
+	}
 }

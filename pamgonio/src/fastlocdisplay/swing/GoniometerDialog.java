@@ -7,13 +7,18 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 
+import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
+import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JRadioButton;
 import javax.swing.JTextField;
 import javax.swing.border.TitledBorder;
 
+import PamUtils.PamFileChooser;
+import PamUtils.PamFileFilter;
 import PamUtils.SelectFolder;
 import PamView.dialog.PamDialog;
 import PamView.dialog.PamGridBagContraints;
@@ -26,7 +31,7 @@ public class GoniometerDialog extends PamDialog {
 	private static GoniometerDialog singleInstance;
 	private GoniometerParams goniometerParams;
 	
-	private JCheckBox controlRealtime;
+	private JRadioButton noControl, controlInternal, controlExternal;
 	private JTextField exeFolder;
 	private JTextField exeName;
 	private JButton browseButton;
@@ -37,7 +42,13 @@ public class GoniometerDialog extends PamDialog {
 	private GoniometerDialog(Window parentFrame) {
 		super(parentFrame, "Goniometer Settings", true);
 		
-		controlRealtime = new JCheckBox("Control FastGPS_Realtime.exe from PAMGuard");
+		noControl = new JRadioButton("Don't control FastGPS_Realtime.exe from PAMGuard");
+		controlInternal = new JRadioButton("Control FastGPS_Realtime.exe within PAMGuard (will exit if PAMGuard closes)");
+		controlExternal = new JRadioButton("Control FastGPS_Realtime.exe outside PAMGuard (less feedback, but keeps running)");
+		ButtonGroup bg = new ButtonGroup();
+		bg.add(noControl);
+		bg.add(controlInternal);
+		bg.add(controlExternal);
 		exeFolder = new JTextField(50);
 		exeName = new JTextField(20);
 		browseButton = new JButton("Browse");
@@ -51,7 +62,9 @@ public class GoniometerDialog extends PamDialog {
 		navPort.getPanel().setToolTipText("Com PORT for GPS ephemeris data input");
 		goniPort.getPanel().setToolTipText("Com PORT for Goniometer data input");
 		outPort.getPanel().setToolTipText("Com PORT for AIS data output");
-		controlRealtime.setToolTipText("If this is selected, PAMGuard will launch FastGPS_Realtime, otherwise it must be started manually in a terminal window!");
+		noControl.setToolTipText("No control. you must launch FastGPS_Realtime yourself in a command window");
+		controlInternal.setToolTipText("PAMGuard will control FastGPS_Realtime. Feedback within PAMGuard, but FAST_GPS_Realtime will close if PAMGUard closes");
+		controlExternal.setToolTipText("PAMGuard will launch FastGPS_Realtime. No feedback, but FAST_GPS_Realtime will continue if PAMGUard closes");
 		debugOut.setToolTipText("Launch FastGPS_Realtime with -d option");
 		
 		JPanel goniPanel = new JPanel(new GridBagLayout());
@@ -59,7 +72,11 @@ public class GoniometerDialog extends PamDialog {
 		
 		GridBagConstraints c = new PamGridBagContraints();
 		c.gridwidth = 4;
-		goniPanel.add(controlRealtime, c);
+		goniPanel.add(noControl, c);
+		c.gridy++;
+		goniPanel.add(controlInternal, c);
+		c.gridy++;
+		goniPanel.add(controlExternal, c);
 		c.gridy++;
 		goniPanel.add(new JLabel("Folder for FastGPS_Realtime executable", JLabel.LEFT), c);
 		c.gridy++;
@@ -102,7 +119,19 @@ public class GoniometerDialog extends PamDialog {
 		
 		exeFolder.setEditable(false);
 		exeName.setEditable(false);
-		controlRealtime.addActionListener(new ActionListener() {
+		noControl.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				selectControlRealtime();
+			}
+		});
+		controlInternal.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				selectControlRealtime();
+			}
+		});
+		controlExternal.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				selectControlRealtime();
@@ -121,7 +150,7 @@ public class GoniometerDialog extends PamDialog {
 	}
 
 	private void enableControls() {
-		boolean isRT = controlRealtime.isSelected();
+		boolean isRT = noControl.isSelected() == false;
 		browseButton.setEnabled(isRT);
 		navPort.getPortList().setEnabled(isRT);
 		goniPort.getPortList().setEnabled(isRT);
@@ -130,8 +159,31 @@ public class GoniometerDialog extends PamDialog {
 	}
 
 	protected void browseExecutable() {
-		// TODO Auto-generated method stub
-		
+		PamFileFilter fileFilter = new PamFileFilter("FastGPS_Realtime executable", ".exe");
+//		String currDir = exeFolder.getText();
+//		if (currDir != null) {
+//			File currD = new File(currDir);
+//		}
+		PamFileChooser fc = new PamFileChooser(exeFolder.getText());
+		fc.setFileFilter(fileFilter);
+//		fc.set
+		int ans = fc.showOpenDialog(getParent());
+		if (ans == JFileChooser.APPROVE_OPTION) {
+			File sel = fc.getSelectedFile();
+			if (sel == null || sel.exists() == false) {
+				return;
+			}
+			else {
+				setExecutable(sel);
+			}
+		}
+	}
+
+	private void setExecutable(File sel) {
+		String name = sel.getName();
+		String fold = sel.getParent();
+		exeName.setText(name);
+		exeFolder.setText(fold);
 	}
 
 	public static GoniometerParams showDialog(Window parentFrame, GoniometerParams goniometerParams) {
@@ -145,7 +197,9 @@ public class GoniometerDialog extends PamDialog {
 	}
 
 	private void setParams() {
-		controlRealtime.setSelected(goniometerParams.controlFastRealtime);
+		noControl.setSelected(goniometerParams.controlFastRealtime == GoniometerParams.GONIOMETER_NOCONTROL);
+		controlInternal.setSelected(goniometerParams.controlFastRealtime == GoniometerParams.GONIOMETER_INTERNALCONTROL);
+		controlExternal.setSelected(goniometerParams.controlFastRealtime == GoniometerParams.GONIOMETER_EXTERNALCONTROL);
 		exeFolder.setText(goniometerParams.fastGPSFolder);
 		exeName.setText(goniometerParams.fastGPSexe);
 		navPort.setPort(goniometerParams.navPort);
@@ -160,8 +214,16 @@ public class GoniometerDialog extends PamDialog {
 
 	@Override
 	public boolean getParams() {
-		boolean runExe = controlRealtime.isSelected();
-		goniometerParams.controlFastRealtime = runExe;
+		if (noControl.isSelected()) {
+			goniometerParams.controlFastRealtime = GoniometerParams.GONIOMETER_NOCONTROL;
+		}
+		if (controlInternal.isSelected()) {
+			goniometerParams.controlFastRealtime = GoniometerParams.GONIOMETER_INTERNALCONTROL;
+		}
+		if (controlExternal.isSelected()) {
+			goniometerParams.controlFastRealtime = GoniometerParams.GONIOMETER_EXTERNALCONTROL;
+		}
+		boolean runExe = goniometerParams.controlFastRealtime > 0;
 		if (runExe) {
 			File exeFile = getExeFile();
 			if (exeFile == null || exeFile.exists() == false) {

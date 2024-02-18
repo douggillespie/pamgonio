@@ -13,7 +13,7 @@ public class AISStationDataSelector extends DataSelector {
 
 	private FastStationDataBlock fastStationDataBlock;
 
-	private AISDataSelectParams selectParams = new AISDataSelectParams();
+	private AISStationSelectParams selectParams = new AISStationSelectParams();
 	
 	public AISStationDataSelector(FastStationDataBlock fastStationDataBlock, String selectorName) {
 		super(fastStationDataBlock, selectorName, false);
@@ -22,8 +22,8 @@ public class AISStationDataSelector extends DataSelector {
 
 	@Override
 	public void setParams(DataSelectParams dataSelectParams) {
-		if (dataSelectParams instanceof AISDataSelectParams) {
-			selectParams = (AISDataSelectParams) dataSelectParams;
+		if (dataSelectParams instanceof AISStationSelectParams) {
+			selectParams = (AISStationSelectParams) dataSelectParams;
 		}
 	}
 

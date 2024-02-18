@@ -116,8 +116,8 @@ public class AISFileMonitor {
 				System.out.printf("Error %d processing AIS file %s\n", newLines, aFile.getName());
 			}
 			else {
-			fileInfo.linesProcessed += newLines;
-			System.out.printf("File %s, processed %d new lines\n", aFile.getName(), newLines);
+				fileInfo.linesProcessed += newLines;
+				System.out.printf("File %s, processed %d new lines\n", aFile.getName(), newLines);
 			}
 		}
 	}
@@ -204,6 +204,9 @@ public class AISFileMonitor {
 	 * @param folder
 	 */
 	private void listFiles(ArrayList<File> newList, String folder) {
+		if (folder == null) {
+			return;
+		}
 		File dir = new File(folder);
 		if (dir.exists() == false) {
 			return;

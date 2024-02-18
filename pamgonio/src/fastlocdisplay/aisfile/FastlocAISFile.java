@@ -64,9 +64,12 @@ public class FastlocAISFile {
 				break;
 			}
 			nLines++;
-			if (nLines <= skipLines) {
-				continue;
-			}
+			/**
+			 * Don't skip any lines since they all have to be checked to see if they are
+			 * duplicate or seed records, so just keep the count, but flag the 
+			 * record as an error if it's within the skip
+			 */
+			
 //			System.out.println(aLine);
 			AISFileLineInfo lineInfo = AISFileLineInfo.interpretLine(aLine);
 			AISDataUnit aisData = extractAISLine(aLine);
@@ -76,22 +79,14 @@ public class FastlocAISFile {
 			AISFileLineInfo duplicate = checkDuplicates(lineInfos, lineInfo);
 			boolean isSeed = checkSeed(lineInfos, lineInfo);
 			int error = (isSeed ? 1 : 0) + (duplicate != null ? 2 : 0);
+			if (nLines <= skipLines) {
+				error += 4;
+			}
 			lineInfo.setErrorCode(error);
 			if (error == 0) {
 				nGoodLines++;
 //				System.out.printf(",%d", nLines);
 			}
-			
-//			if (firstAIS == null) {
-//				firstAIS = aisData;
-//				lastAIS = aisData;
-//			}
-			
-//			LatLong thisLL = aisData.getPositionReport().latLong;
-//			LatLong firstLL = firstAIS.getPositionReport().latLong;
-//			LatLong prevLL = lastAIS.getPositionReport().latLong;
-//			double distFirst = firstLL.distanceToMetres(thisLL);
-//			double distLast = prevLL.distanceToMetres(thisLL);
 
 //			System.out.printf("%s:%s %3.1fm from first, %3.1fm from previous\n", lineInfo.toString(), report.toString(), distFirst, distLast);
 			if (aisDataMonitor != null) {

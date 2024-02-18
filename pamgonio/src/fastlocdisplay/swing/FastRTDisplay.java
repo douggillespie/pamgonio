@@ -30,6 +30,8 @@ public class FastRTDisplay implements UserDisplayComponent {
 
 	private JScrollPane scrollPane;
 	
+	private FastRTSummaryPanel fastRTPanel;
+	
 	public FastRTDisplay(GoniometerControl gniometerControl) {
 		super();
 		this.goniometerControl = gniometerControl;
@@ -37,6 +39,8 @@ public class FastRTDisplay implements UserDisplayComponent {
 		mainTextArea = new PamTextArea("");
 		scrollPane = new JScrollPane(mainTextArea);
 		mainPanel.add(BorderLayout.CENTER, scrollPane);
+		fastRTPanel = new FastRTSummaryPanel(gniometerControl);
+		mainPanel.add(BorderLayout.NORTH, fastRTPanel.getMainPanel());
 		
 		goniometerControl.setFastRTDisplay(this);
 	}

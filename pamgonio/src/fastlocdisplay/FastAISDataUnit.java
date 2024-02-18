@@ -1,5 +1,7 @@
 package fastlocdisplay;
 
+import java.util.ArrayList;
+
 import AIS.AISPositionReport;
 import PamController.PamController;
 import PamUtils.LatLong;
@@ -60,16 +62,40 @@ public class FastAISDataUnit extends PamDataUnit<PamDataUnit, FastStationDataUni
 	@Override
 	public String getSummaryString() {
 		FastStationDataUnit superDet = (FastStationDataUnit) this.getSuperDetection(FastStationDataUnit.class);
-		String txt = String.format("<html>Fastloc location %s", PamCalendar.formatDBDateTime(getTimeMilliseconds()));
+		String txt = String.format("<html><strong>%s</strong><br>Fastloc location", PamCalendar.formatDBDateTime(getTimeMilliseconds()));
 		if (PamController.getInstance().getRunMode() == PamController.RUN_NORMAL) {
 			long ago = System.currentTimeMillis() - getTimeMilliseconds();
 			txt += String.format("<br>%s ago", PamCalendar.formatDuration(ago));
+			if (isLast() ) {
+				txt += " (latest from station)";
+			}
 		}
-		txt += String.format("<br>Id %d, 0X%X", integerId, hexId);
+		txt += String.format("<br>Id %d, 0x%X", integerId, hexId);
 		LatLong ll = positionReport.latLong;
 		txt += String.format("<br>%s, %s",ll.formatLatitude(),ll.formatLongitude());
 		
 		return txt;
+	}
+	/**
+	 * See if it's the last in the chain for this station
+	 * @return true if it's the last one. 
+	 */
+	public boolean isLast() {
+		SuperDetection superDet = null;
+		synchronized (getSuperDetectionSyncronisation()) {
+			superDet = getSuperDetection(FastStationDataUnit.class);
+		}
+		if (superDet == null) {
+			return false;
+		}
+		synchronized (superDet.getSubDetectionSyncronisation()) {
+			ArrayList<PamDataUnit> subDets = superDet.getSubDetections();
+			if (subDets == null || subDets.size() == 0) {
+				return false;
+			}
+			PamDataUnit lastSub = subDets.get(subDets.size()-1);
+			return lastSub == this;
+		}
 	}
 
 

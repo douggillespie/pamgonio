@@ -8,10 +8,13 @@ import PamController.PamViewParameters;
 import PamguardMVC.PamProcess;
 import fastlocdisplay.aisfile.AISDataMonitor;
 import fastlocdisplay.aisfile.AISFileLineInfo;
+import fastlocdisplay.data.AISLocationDataSelectCreator;
 import fastlocdisplay.data.AISStationDataSelectCreator;
 import fastlocdisplay.io.FastAISLogging;
+import fastlocdisplay.swing.FastAISLocationsOverlay;
 import fastlocdisplay.swing.FastAISStationsOverlay;
-import fastlocdisplay.swing.FastAISSymbolManager;
+import fastlocdisplay.swing.FastLocationsSymbolManager;
+import fastlocdisplay.swing.FastStationsSymbolManager;
 
 public class FastlocViewProcess extends PamProcess implements AISDataMonitor {
 
@@ -30,11 +33,14 @@ public class FastlocViewProcess extends PamProcess implements AISDataMonitor {
 		fastAISDataBlock = new FastAISDataBlock(this);
 		addOutputDataBlock(fastAISDataBlock);
 		fastAISDataBlock.SetLogging(fastAISLogging = new FastAISLogging(fastAISDataBlock));
+		fastAISDataBlock.setOverlayDraw(new FastAISLocationsOverlay());
+		fastAISDataBlock.setPamSymbolManager(new FastLocationsSymbolManager(fastAISDataBlock));
+		fastAISDataBlock.setDataSelectCreator(new AISLocationDataSelectCreator(this, fastAISDataBlock));
 		
 		fastStationDataBlock = new FastStationDataBlock(this);
 		addOutputDataBlock(fastStationDataBlock);
-		fastStationDataBlock.setOverlayDraw(new FastAISStationsOverlay());
-		fastStationDataBlock.setPamSymbolManager(new FastAISSymbolManager(fastStationDataBlock));
+//		fastStationDataBlock.setOverlayDraw(new FastAISStationsOverlay());
+		fastStationDataBlock.setPamSymbolManager(new FastStationsSymbolManager(fastStationDataBlock));
 		fastStationDataBlock.setDataSelectCreator(new AISStationDataSelectCreator(fastStationDataBlock));
 	}
 
@@ -110,6 +116,34 @@ public class FastlocViewProcess extends PamProcess implements AISDataMonitor {
 			exUnit.addSubDetection(aisDataUnit);
 			fastStationDataBlock.updatePamData(exUnit, aisDataUnit.getTimeMilliseconds());
 		}
+	}
+
+	/**
+	 * @return the fastlocViewControl
+	 */
+	public FastlocViewControl getFastlocViewControl() {
+		return fastlocViewControl;
+	}
+
+	/**
+	 * @return the fastStationDataBlock
+	 */
+	public FastStationDataBlock getFastStationDataBlock() {
+		return fastStationDataBlock;
+	}
+
+	/**
+	 * @return the fastAISDataBlock
+	 */
+	public FastAISDataBlock getFastAISDataBlock() {
+		return fastAISDataBlock;
+	}
+
+	/**
+	 * @return the fastAISLogging
+	 */
+	public FastAISLogging getFastAISLogging() {
+		return fastAISLogging;
 	}
 
 }

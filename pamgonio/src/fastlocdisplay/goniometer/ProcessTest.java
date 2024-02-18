@@ -1,5 +1,6 @@
 package fastlocdisplay.goniometer;
 
+import java.awt.Desktop;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.BufferedReader;
@@ -23,14 +24,52 @@ public class ProcessTest {
 	String cmd = "C:\\Windows\\system32\\cmd.exe";
 	String cmd2 = "C:\\ProgramData\\FastGPS Realtime Solution\\FastGPS_Realtime.exe";
 	String opDir = "C:\\PAMGuardTest\\Goniometer\\TestOutput";
+	String bat = "C:\\ProgramData\\FastGPS Realtime Solution\\cmdcmd.bat";
 	
 	private volatile Process process;
 	private Thread inputThread, errorThread;
 	
 	public static void main(String[] args) {
-		new ProcessTest().test3();
+		new ProcessTest().test4();
 	}
 	
+	private void test4() {
+//		try {
+//			Desktop.getDesktop().open(new File(cmd));
+////			Desktop.getDesktop().
+//		} catch (IOException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
+////		System.console().
+//
+//		ArrayList<String> commands = new ArrayList<>();
+//		commands.add(cmd);
+//		commands.add("dir\r\n");
+//
+//		ProcessBuilder pb = new ProcessBuilder(commands);
+//		
+//		try {
+//			pb.inheritIO();
+//			process = pb.start();
+//			process.waitFor();
+//			System.out.println("Started process" + process);
+//		} catch (IOException e) {
+//			e.printStackTrace();
+//		} catch (InterruptedException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
+//		Runtime.getRuntime().
+		File batFile = new File(bat);
+		try {
+			Desktop.getDesktop().open(batFile);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
 	private void test3() {
 		String[] cmds = new String[10];
 		cmds[0] = cmd2;

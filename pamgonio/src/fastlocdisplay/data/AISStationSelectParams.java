@@ -5,13 +5,16 @@ import java.util.HashMap;
 
 import PamguardMVC.dataSelector.DataSelectParams;
 
-public class AISDataSelectParams extends DataSelectParams implements Serializable, Cloneable {
+public class AISStationSelectParams extends DataSelectParams implements Serializable, Cloneable {
 	
 	private HashMap<Integer, Boolean> stationSelection = new HashMap<>();
 
 	private static final long serialVersionUID = 1L;
 	
 	public HashMap<Integer, Boolean> getStationMap() {
+		if (stationSelection == null) {
+			stationSelection = new HashMap<Integer, Boolean>();
+		}
 		return stationSelection;
 	}
 	
@@ -21,7 +24,7 @@ public class AISDataSelectParams extends DataSelectParams implements Serializabl
 	 * @return true if selected. default is true
 	 */
 	public boolean isStationSelected(int stationId) {
-		Boolean sel = stationSelection.get(stationId);
+		Boolean sel = getStationMap().get(stationId);
 		if (sel == null) {
 			setStationSelected(stationId, true);
 			return true;
@@ -35,13 +38,13 @@ public class AISDataSelectParams extends DataSelectParams implements Serializabl
 	 * @param sel selection, true or false
 	 */
 	public void setStationSelected(int stationId, boolean sel) {
-		stationSelection.put(stationId, sel);
+		getStationMap().put(stationId, sel);
 	}
 
 	@Override
-	protected AISDataSelectParams clone() {
+	protected AISStationSelectParams clone() {
 		try {
-			return (AISDataSelectParams) super.clone();
+			return (AISStationSelectParams) super.clone();
 		} catch (CloneNotSupportedException e) {
 			e.printStackTrace();
 			return null;

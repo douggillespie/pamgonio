@@ -5,9 +5,9 @@ import PamView.symbol.StandardSymbolManager;
 import PamView.symbol.modifier.RotateColoursModifier;
 import PamguardMVC.PamDataBlock;
 
-public class FastAISSymbolManager extends StandardSymbolManager {
+public class FastLocationsSymbolManager extends StandardSymbolManager {
 
-	public FastAISSymbolManager(PamDataBlock pamDataBlock) {
+	public FastLocationsSymbolManager(PamDataBlock pamDataBlock) {
 		super(pamDataBlock, FastAISStationsOverlay.defaultSymbol.getSymbolData());
 		addSymbolOption(HAS_SYMBOL);
 	}
@@ -15,7 +15,7 @@ public class FastAISSymbolManager extends StandardSymbolManager {
 	@Override
 	public void addSymbolModifiers(PamSymbolChooser psc) {
 		addAnnotationModifiers(psc);
-		psc.addSymbolModifier(new RotateColoursModifier(psc));
+		psc.addSymbolModifier(new FastLocationsSymbolModifier(psc));
 	}
 
 }

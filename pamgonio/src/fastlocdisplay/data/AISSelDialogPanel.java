@@ -18,7 +18,7 @@ import fastlocdisplay.FastStationDataUnit;
 
 public class AISSelDialogPanel implements PamDialogPanel {
 	
-	private AISDataSelectParams selectParams;
+	private AISStationSelectParams selectParams;
 	private FastStationDataBlock fastStationDataBlock;
 	
 	private JPanel mainPanel;
@@ -27,7 +27,7 @@ public class AISSelDialogPanel implements PamDialogPanel {
 	private JCheckBox selectAll;
 	private Set<Integer> stationKeys;
 
-	public AISSelDialogPanel(FastStationDataBlock fastStationDataBlock, AISDataSelectParams selectParams) {
+	public AISSelDialogPanel(FastStationDataBlock fastStationDataBlock, AISStationSelectParams selectParams) {
 		super();
 		this.fastStationDataBlock = fastStationDataBlock;
 		this.selectParams = selectParams;
