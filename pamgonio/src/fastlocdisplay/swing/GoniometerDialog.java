@@ -42,9 +42,9 @@ public class GoniometerDialog extends PamDialog {
 	private GoniometerDialog(Window parentFrame) {
 		super(parentFrame, "Goniometer Settings", true);
 		
-		noControl = new JRadioButton("Don't control FastGPS_Realtime.exe from PAMGuard");
-		controlInternal = new JRadioButton("Control FastGPS_Realtime.exe within PAMGuard (will exit if PAMGuard closes)");
-		controlExternal = new JRadioButton("Control FastGPS_Realtime.exe outside PAMGuard (less feedback, but keeps running)");
+		noControl = new JRadioButton(GoniometerParams.STR_NOCONTROL);
+		controlInternal = new JRadioButton(GoniometerParams.STR_INTERNALCONTROL);
+		controlExternal = new JRadioButton(GoniometerParams.STR_EXTERNALCONTROL);
 		ButtonGroup bg = new ButtonGroup();
 		bg.add(noControl);
 		bg.add(controlInternal);
@@ -151,11 +151,11 @@ public class GoniometerDialog extends PamDialog {
 
 	private void enableControls() {
 		boolean isRT = noControl.isSelected() == false;
-		browseButton.setEnabled(isRT);
-		navPort.getPortList().setEnabled(isRT);
-		goniPort.getPortList().setEnabled(isRT);
-		outPort.getPortList().setEnabled(isRT);
-		debugOut.setEnabled(isRT);
+//		browseButton.setEnabled(isRT);
+//		navPort.getPortList().setEnabled(isRT);
+//		goniPort.getPortList().setEnabled(isRT);
+//		outPort.getPortList().setEnabled(isRT);
+//		debugOut.setEnabled(isRT);
 	}
 
 	protected void browseExecutable() {
@@ -223,34 +223,36 @@ public class GoniometerDialog extends PamDialog {
 		if (controlExternal.isSelected()) {
 			goniometerParams.controlFastRealtime = GoniometerParams.GONIOMETER_EXTERNALCONTROL;
 		}
+		goniometerParams.debugOutput = debugOut.isSelected();
+		goniometerParams.navPort = navPort.getPort();
+		goniometerParams.gonioComPort = goniPort.getPort();
+		goniometerParams.outPort = outPort.getPort();
+		
+		
 		boolean runExe = goniometerParams.controlFastRealtime > 0;
 		if (runExe) {
 			File exeFile = getExeFile();
 			if (exeFile == null || exeFile.exists() == false) {
 				return showWarning("you must select a valid FastGPS_Realtime.exe");
 			}
-			goniometerParams.debugOutput = debugOut.isSelected();
-			goniometerParams.navPort = navPort.getPort();
 			if (goniometerParams.navPort == null) {
 				return showWarning("you must select a valid COM port for navigation data");
 			}
-			goniometerParams.gonioComPort = goniPort.getPort();
 			if (goniometerParams.gonioComPort == null) {
 				return showWarning("you must select a valid COM port for goniometer data");
 			}
-//			if (goniometerParams.gonioComPort.equals(goniometerParams.navPort)) {
-//				return showWarning("The goniometer COM port cannot be the same as the navigation data port");
-//			}
-			goniometerParams.outPort = outPort.getPort();
+			if (goniometerParams.gonioComPort.equals(goniometerParams.navPort)) {
+				return showWarning("The goniometer COM port cannot be the same as the navigation data port");
+			}
 			if (goniometerParams.outPort == null) {
 				return showWarning("you must select a valid COM port for output data");
 			}
-//			if (goniometerParams.outPort.equals(goniometerParams.navPort)) {
-//				return showWarning("The output COM port cannot be the same as the navigation data port");
-//			}
-//			if (goniometerParams.outPort.equals(goniometerParams.gonioComPort)) {
-//				return showWarning("The output COM port cannot be the same as the goniometer data port");
-//			}
+			if (goniometerParams.outPort.equals(goniometerParams.navPort)) {
+				return showWarning("The output COM port cannot be the same as the navigation data port");
+			}
+			if (goniometerParams.outPort.equals(goniometerParams.gonioComPort)) {
+				return showWarning("The output COM port cannot be the same as the goniometer data port");
+			}
 		}
 		String outfolder = outputFolder.getFolderName(true);
 		if (outfolder == null) {

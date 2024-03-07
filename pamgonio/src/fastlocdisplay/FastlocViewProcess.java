@@ -87,8 +87,13 @@ public class FastlocViewProcess extends PamProcess implements AISDataMonitor {
 	@Override
 	public void notifyModelChanged(int changeType) {
 		super.notifyModelChanged(changeType);
-		if (changeType == PamController.INITIALIZATION_COMPLETE) {
+		switch (changeType) {
+		case PamController.INITIALIZATION_COMPLETE:
 			fastAISLogging.loadEarlyData(new PamViewParameters(0, System.currentTimeMillis()));
+			fastAISDataBlock.sortData();
+			relinkStations();
+			break;
+		case PamController.DATA_LOAD_COMPLETE:
 			fastAISDataBlock.sortData();
 			relinkStations();
 		}

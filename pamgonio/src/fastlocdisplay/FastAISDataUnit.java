@@ -4,8 +4,10 @@ import java.util.ArrayList;
 
 import AIS.AISPositionReport;
 import PamController.PamController;
+import PamController.masterReference.MasterReferencePoint;
 import PamUtils.LatLong;
 import PamUtils.PamCalendar;
+import PamUtils.PamUtils;
 import PamguardMVC.PamDataUnit;
 import PamguardMVC.superdet.SuperDetection;
 import fastlocdisplay.aisfile.AISFileLineInfo;
@@ -73,6 +75,13 @@ public class FastAISDataUnit extends PamDataUnit<PamDataUnit, FastStationDataUni
 		txt += String.format("<br>Id %d, 0x%X", integerId, hexId);
 		LatLong ll = positionReport.latLong;
 		txt += String.format("<br>%s, %s",ll.formatLatitude(),ll.formatLongitude());
+		// try to get a GPS location and a range. 
+		LatLong masterLatLong = MasterReferencePoint.getLatLong();
+		if (masterLatLong != null) {
+			double range = masterLatLong.distanceToMetres(ll);
+			double bearing = masterLatLong.bearingTo(ll);
+			txt += String.format("<br>Range %3.0fm, Bearing %3.0f%sT", range, bearing, LatLong.deg);
+		}
 		
 		return txt;
 	}

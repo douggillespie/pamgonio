@@ -133,4 +133,8 @@ public class FastRTDisplay implements UserDisplayComponent {
 		}
 	}
 
+	public void updateSettings() {
+		fastRTPanel.updateSettings();
+	}
+
 }

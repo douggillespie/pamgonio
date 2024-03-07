@@ -25,7 +25,7 @@ public class SystemTimeFile {
 	private void tests() {
 		String demoFile = "C:\\ProjectData\\goniometer\\ArchivedData\\Iceland_2023\\Goniometer\\gonio_playback\\12_Jul\\COM16_2023-07-12_141344_systime.txt";
 //		String demoFile = "C:\\ProjectData\\goniometer\\ArchivedData\\Bench_2024\\COM48_2024-02-06_152424_systime.txt";
-		ArrayList<SystemTimePair> data = readTimefile(new File(demoFile));
+		TimeFileInfo data = readTimefile(new File(demoFile));
 		// get the file information ...
 		BasicFileAttributes attr = null;
 		try {
@@ -33,14 +33,23 @@ public class SystemTimeFile {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		SystemTimePair lastData = data.get(data.size()-1);
-		long modified = attr.lastModifiedTime().toMillis();
-//		long created = atte.
-		System.out.printf("\nFile modified %s (%s), last line %s\n", PamCalendar.formatDBDateTime(modified), attr.lastModifiedTime().toString(), lastData);
+//		SystemTimePair lastData = data.get(data.size()-1);
+//		long modified = attr.lastModifiedTime().toMillis();
+////		long created = atte.
+//		System.out.printf("\nFile modified %s (%s), last line %s\n", PamCalendar.formatDBDateTime(modified), attr.lastModifiedTime().toString(), lastData);
 		
 	}
 
-	private ArrayList<SystemTimePair> readTimefile(File timeFile) {
+	private TimeFileInfo readTimefile(File timeFile) {
+		TimeFileInfo timeFileInfo = new TimeFileInfo();
+		BasicFileAttributes attr = null;
+		try {
+			attr = Files.readAttributes(timeFile.toPath(), BasicFileAttributes.class, LinkOption.NOFOLLOW_LINKS);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		timeFileInfo.basicFileAttributes = attr;
+		
 		BufferedReader bir = null;
 		try {
 			FileReader fr = new FileReader(timeFile);
@@ -51,7 +60,6 @@ public class SystemTimeFile {
 		if (bir == null) {
 			return null;
 		}
-		ArrayList<SystemTimePair> data = new ArrayList<>();
 		// skip first line
 		String aLine = null;
 		try {
@@ -80,11 +88,11 @@ public class SystemTimeFile {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-			data.add(new SystemTimePair(gpsTime, systemTime));
+			timeFileInfo.timePairs.add(new SystemTimePair(gpsTime, systemTime));
 			
 		}
 		
-		return data;
+		return timeFileInfo;
 	}	
 	
 	/**

@@ -7,9 +7,11 @@ import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
+import javax.swing.ButtonGroup;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JRadioButton;
 import javax.swing.JTextField;
 import javax.swing.Timer;
 import javax.swing.border.TitledBorder;
@@ -25,6 +27,7 @@ import PamguardMVC.PamObserverAdapter;
 import fastlocdisplay.FastAISDataBlock;
 import fastlocdisplay.FastAISDataUnit;
 import fastlocdisplay.goniometer.GoniometerControl;
+import fastlocdisplay.goniometer.GoniometerParams;
 
 public class FastRTSummaryPanel {
 
@@ -37,6 +40,8 @@ public class FastRTSummaryPanel {
 	private JLabel exeSummary;
 	
 	private JLabel lastPosition;
+	
+	private JRadioButton[] ctrlButtons;
 	
 	private Color warningCol = Color.ORANGE;
 	
@@ -56,6 +61,20 @@ public class FastRTSummaryPanel {
 		okCol = mainPanel.getBackground();
 		GridBagConstraints c = new PamGridBagContraints();
 		
+		ctrlButtons = new JRadioButton[3];
+		ButtonGroup bg = new ButtonGroup();
+		for (int i = 0; i < 3; i++) {
+			ctrlButtons[i] = new JRadioButton(GoniometerParams.getControlName(i));
+			bg.add(ctrlButtons[i]);
+			ctrlButtons[i].addActionListener(new ControlTypeAction(i));
+			c.gridwidth = 2;
+			if (PamController.getInstance().getRunMode() != PamController.RUN_PAMVIEW) {
+				mainPanel.add(ctrlButtons[i], c);
+				c.gridy++;
+			}
+		}
+
+		c.gridwidth = 1;
 		mainPanel.add(new JLabel("Fast GPS Status: ", JLabel.RIGHT), c);
 		c.gridx++;
 		mainPanel.add(exeSummary = new JLabel(""), c);
@@ -80,6 +99,17 @@ public class FastRTSummaryPanel {
 		leftPanel.setBorder(new TitledBorder("Goniometer status"));
 		
 		getLatestDataUnit();
+		
+		updateSettings();
+	}
+
+	/**
+	 * Set the type of fastloc control - none, internal, or external
+	 * @param controlType
+	 */
+	protected void setControlType(int controlType) {
+		goniometerControl.getGoniometerParams().controlFastRealtime = controlType;
+		goniometerControl.setupGoniometer();
 	}
 
 	/**
@@ -142,6 +172,24 @@ public class FastRTSummaryPanel {
 		
 	}
 	
+	private class ControlTypeAction implements ActionListener {
+	
+		int actionType;
+		
+		
+		public ControlTypeAction(int actionType) {
+			super();
+			this.actionType = actionType;
+		}
+	
+	
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			setControlType(actionType);
+		}
+		
+	}
+
 	private class DataObserver extends PamObserverAdapter {
 
 		@Override
@@ -157,6 +205,13 @@ public class FastRTSummaryPanel {
 			}
 		}
 		
+	}
+
+	public void updateSettings() {
+		GoniometerParams params = goniometerControl.getGoniometerParams();
+		for (int i = 0; i < ctrlButtons.length; i++) {
+			ctrlButtons[i].setSelected(params.controlFastRealtime == i);
+		}
 	}
 	
 }

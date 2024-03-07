@@ -74,6 +74,9 @@ public class GoniometerControl implements PamSettings, ProcessMonitor {
 		if (newSettings != null) {
 			goniometerParams = newSettings;
 			setupGoniometer();
+			if (fastRTDisplay != null) {
+				fastRTDisplay.updateSettings();
+			}
 		}
 	}
 
@@ -101,6 +104,7 @@ public class GoniometerControl implements PamSettings, ProcessMonitor {
 	@Override
 	public boolean restoreSettings(PamControlledUnitSettings pamControlledUnitSettings) {
 		this.goniometerParams = (GoniometerParams) pamControlledUnitSettings.getSettings();
+		goniometerParams.controlFastRealtime = GoniometerParams.GONIOMETER_NOCONTROL;
 		return goniometerParams != null;
 	}
 
@@ -137,7 +141,7 @@ public class GoniometerControl implements PamSettings, ProcessMonitor {
 		}
 	}
 
-	protected void setupGoniometer() {
+	public void setupGoniometer() {
 		aisFileMonitor.setOptions(goniometerParams.outputDirectory, goniometerParams.autoDatedFolders, null);
 		try {
 			processControl.stopProcess();

@@ -3,6 +3,8 @@ package fastlocdisplay.goniometer;
 import java.io.File;
 import java.io.Serializable;
 
+import javax.swing.JRadioButton;
+
 import PamUtils.PamCalendar;
 
 public class GoniometerParams implements Serializable, Cloneable {
@@ -12,6 +14,36 @@ public class GoniometerParams implements Serializable, Cloneable {
 	public static final int GONIOMETER_NOCONTROL = 0;
 	public static final int GONIOMETER_INTERNALCONTROL = 1;
 	public static final int GONIOMETER_EXTERNALCONTROL = 2;
+	
+	public static final String STR_NOCONTROL = "Don't control FastGPS_Realtime.exe from PAMGuard";
+	public static final String STR_INTERNALCONTROL = "Control FastGPS_Realtime.exe within PAMGuard (will exit if PAMGuard closes)";
+	public static final String STR_EXTERNALCONTROL = "Control FastGPS_Realtime.exe outside PAMGuard (less feedback, but keeps running)";
+
+	/**
+	 * Static func, so can use without an instance.<br>
+	 * Get text representation of control type (for dialogs, etc). 
+	 * @param controlType type of control 
+	 * @return
+	 */
+	public static String getControlName(int controlType) {
+		switch (controlType) {
+		case GONIOMETER_NOCONTROL:
+			return STR_NOCONTROL;
+		case GONIOMETER_INTERNALCONTROL:
+			return STR_INTERNALCONTROL;
+		case GONIOMETER_EXTERNALCONTROL:
+			return STR_EXTERNALCONTROL;
+		}
+		return null;
+	}
+	
+	/**
+	 * Get text representation of control type (for dialogs, etc). 
+	 * @return
+	 */
+	public String getControlName() {
+		return getControlName(controlFastRealtime);
+	}
 	
 	/**
 	 * Control the external software from within PAMGuard. 
