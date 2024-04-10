@@ -109,7 +109,13 @@ public class GoniometerStationsFile {
 				break;
 			}
 			
-			StationId stationId = isStationId(aLine);
+			StationId stationId = null;
+			try {
+				stationId = isStationId(aLine);
+			}
+			catch (GoniometerException ex) {
+				System.out.printf("Error reading goniometer file line %s\n%s\n", aLine, ex.getMessage());
+			}
 			if (stationId == null) {
 				fileData.addOtherLine(aLine);
 			}

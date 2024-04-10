@@ -4,6 +4,7 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.TimeZone;
 
 import AIS.AISPositionReport;
 import PamUtils.LatLong;
@@ -66,7 +67,17 @@ public class AISFileLineInfo {
 			System.out.println("Unable to parse data id values");
 		}
 		
-		return new AISFileLineInfo(date+time, lat, lon, intId, hexId);
+		long utc = getUTCTime(date+time);
+		
+		return new AISFileLineInfo(utc, lat, lon, intId, hexId);
+	}
+
+	private static long getUTCTime(long localTime) {
+		TimeZone timeZone = TimeZone.getDefault();
+		if (timeZone == null) {
+			return localTime;
+		}
+		return localTime-timeZone.getOffset(localTime);
 	}
 
 	/**
