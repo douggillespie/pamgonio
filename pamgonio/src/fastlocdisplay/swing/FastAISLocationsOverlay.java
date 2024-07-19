@@ -1,13 +1,16 @@
 package fastlocdisplay.swing;
 
+import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import GPS.GpsData;
 import Map.MapDetectionData;
 import Map.MapPanel;
 import Map.MapRectProjector;
@@ -54,7 +57,8 @@ public class FastAISLocationsOverlay  extends PanelOverlayDraw {
 		// next iteration will time limit this to x hours. 
 		FastAISDataUnit aisUnit = (FastAISDataUnit) pamDataUnit;
 		Point prevXY = pointHistory.get(aisUnit.getIntegerId());
-		Coordinate3d pos = generalProjector.getCoord3d(aisUnit.getPositionReport().getLatitude(), aisUnit.getPositionReport().getLongitude(), 0);
+		Coordinate3d pos = generalProjector.getCoord3d(aisUnit.getPositionReport().getLatitude(), 
+				aisUnit.getPositionReport().getLongitude(), 0);
 		Point2D posXY = pos.getPoint2D();
 		PamSymbol symbol = getPamSymbol(pamDataUnit, generalProjector);
 		Point p = new Point((int) posXY.getX(), (int) posXY.getY());
@@ -62,6 +66,16 @@ public class FastAISLocationsOverlay  extends PanelOverlayDraw {
 		if (prevXY != null) {
 			g.drawLine(prevXY.x, prevXY.y, p.x, p.y);
 		}
+		// and draw a line to the trackline. 
+		GpsData oll = aisUnit.getOriginLatLong(false);
+		if (oll != null) {
+			Coordinate3d vPos = generalProjector.getCoord3d(oll.getLatitude(), oll.getLongitude(), 0);
+			Graphics2D g2d = (Graphics2D) g;
+			g2d.setStroke(new BasicStroke(1));
+			Point2D vXY = vPos.getPoint2D();
+			g2d.drawLine((int) vXY.getX(), (int) vXY.getY(), p.x, p.y);
+		}
+		
 		pointHistory.put(aisUnit.getIntegerId(), p);
 		generalProjector.addHoverData(pos, aisUnit);
 		if (aisUnit.isLast()) {
