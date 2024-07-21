@@ -1,6 +1,8 @@
 package fastlocdisplay.swing;
 
+import PamView.GeneralProjector;
 import PamView.symbol.PamSymbolChooser;
+import PamView.symbol.StandardSymbolChooser;
 import PamView.symbol.StandardSymbolManager;
 import PamView.symbol.modifier.RotateColoursModifier;
 import PamguardMVC.PamDataBlock;

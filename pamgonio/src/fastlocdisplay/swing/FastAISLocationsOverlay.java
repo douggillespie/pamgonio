@@ -23,6 +23,7 @@ import PamView.PamSymbolType;
 import PamView.PanelOverlayDraw;
 import PamView.GeneralProjector.ParameterType;
 import PamView.GeneralProjector.ParameterUnits;
+import PamView.symbol.PamSymbolChooser;
 import PamguardMVC.PamDataBlock;
 import PamguardMVC.PamDataUnit;
 import PamguardMVC.superdet.SuperDetection;
@@ -55,6 +56,14 @@ public class FastAISLocationsOverlay  extends PanelOverlayDraw {
 	public Rectangle drawOnMap(Graphics g, PamDataUnit pamDataUnit, GeneralProjector generalProjector) {
 		// this is going to draw all the points for a single station. 
 		// next iteration will time limit this to x hours. 
+		boolean linkLines = false;
+		boolean vesselLines = false;
+		PamSymbolChooser symbolChooser = generalProjector.getPamSymbolChooser();
+		if (symbolChooser instanceof FastLocationsSymbolChooser) {
+			FastLocSymbolOptions opts = ((FastLocationsSymbolChooser) symbolChooser).getSymbolOptions();
+			linkLines = opts.drawLinkLines;
+			vesselLines = opts.drawVesselLines;
+		}
 		FastAISDataUnit aisUnit = (FastAISDataUnit) pamDataUnit;
 		Point prevXY = pointHistory.get(aisUnit.getIntegerId());
 		Coordinate3d pos = generalProjector.getCoord3d(aisUnit.getPositionReport().getLatitude(), 
@@ -63,19 +72,23 @@ public class FastAISLocationsOverlay  extends PanelOverlayDraw {
 		PamSymbol symbol = getPamSymbol(pamDataUnit, generalProjector);
 		Point p = new Point((int) posXY.getX(), (int) posXY.getY());
 		Rectangle r = symbol.draw(g, p);
-		if (prevXY != null) {
+
+
+		if (prevXY != null & linkLines) {
 			g.drawLine(prevXY.x, prevXY.y, p.x, p.y);
 		}
-		// and draw a line to the trackline. 
-		GpsData oll = aisUnit.getOriginLatLong(false);
-		if (oll != null) {
-			Coordinate3d vPos = generalProjector.getCoord3d(oll.getLatitude(), oll.getLongitude(), 0);
-			Graphics2D g2d = (Graphics2D) g;
-			g2d.setStroke(new BasicStroke(1));
-			Point2D vXY = vPos.getPoint2D();
-			g2d.drawLine((int) vXY.getX(), (int) vXY.getY(), p.x, p.y);
+		if (vesselLines) {
+			// and draw a line to the trackline. 
+			GpsData oll = aisUnit.getOriginLatLong(false);
+			if (oll != null) {
+				Coordinate3d vPos = generalProjector.getCoord3d(oll.getLatitude(), oll.getLongitude(), 0);
+				Graphics2D g2d = (Graphics2D) g;
+				g2d.setStroke(new BasicStroke(1));
+				Point2D vXY = vPos.getPoint2D();
+				g2d.drawLine((int) vXY.getX(), (int) vXY.getY(), p.x, p.y);
+			}
 		}
-		
+
 		pointHistory.put(aisUnit.getIntegerId(), p);
 		generalProjector.addHoverData(pos, aisUnit);
 		if (aisUnit.isLast()) {
