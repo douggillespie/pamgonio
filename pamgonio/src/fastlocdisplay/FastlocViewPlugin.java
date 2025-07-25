@@ -14,7 +14,7 @@ public class FastlocViewPlugin implements PamPluginInterface {
 
 	@Override
 	public String getHelpSetName() {
-		return null;
+		return "fastlocdisplay/help/GoniometerHelpProj.hs";
 	}
 
 	@Override
