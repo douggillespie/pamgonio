@@ -39,17 +39,17 @@ public class FastlocViewPlugin implements PamPluginInterface {
 
 	@Override
 	public String getVersion() {
-		return "1.3";
+		return "1.4";
 	}
 
 	@Override
 	public String getPamVerDevelopedOn() {
-		return "2.02.10";
+		return "2.02.17";
 	}
 
 	@Override
 	public String getPamVerTestedOn() {
-		return "2.02.10";
+		return "2.02.17";
 	}
 
 	@Override
