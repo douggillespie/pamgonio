@@ -25,6 +25,7 @@ import PamUtils.LatLong;
 import PamUtils.PamCalendar;
 import PamUtils.PamUtils;
 import PamView.dialog.warn.WarnOnce;
+import fastlocdisplay.FastlocViewControl;
 import serialComms.jserialcomm.PJSerialComm;
 
 /**
@@ -36,7 +37,7 @@ public class ExtProcessControl {
 	
 	private String previousCommand;
 	private GoniometerControl goniometerControl; 
-	private Process process;
+	private Process internalProcess;
 	private Thread inputThread, errorThread;
 	private ProcessMonitor processMonitor;
 
@@ -47,11 +48,16 @@ public class ExtProcessControl {
 	
 	/**
 	 * Check to see if the process is up and alive. 
-	 * @return true if it seems to be running. 
+	 * @return true if it seems to be running either internally or externally. . 
 	 */
 	public boolean processRunning() {
-		if (process != null) {
-			return process.isAlive();
+		ProcessHandle proc = findFastGPSProcess();
+		if (proc != null && proc.isAlive()) {
+			return proc.isAlive(); 
+		}
+		
+		if (internalProcess != null) {
+			return internalProcess.isAlive();
 		}
 		ProcessHandle exHandle = findFastGPSProcess();
 		if (exHandle == null) {
@@ -64,11 +70,11 @@ public class ExtProcessControl {
 	 * Stop the process. if it's running
 	 * @throws GoniometerException
 	 */
-	public boolean stopProcess() throws GoniometerException {
-		if (process == null) {
+	public synchronized boolean stopProcess() throws GoniometerException {
+		if (internalProcess == null) {
 			return false;
 		}
-		process.destroy();
+		internalProcess.destroy();
 		try {
 			if (inputThread != null) {
 				inputThread.join(2000);
@@ -80,7 +86,7 @@ public class ExtProcessControl {
 			e.printStackTrace();
 			throw new GoniometerException("Problems stopping executable: " + e.getMessage());
 		}
-		process.destroyForcibly();
+		internalProcess.destroyForcibly();
 		return true;
 	}
 	
@@ -98,17 +104,18 @@ public class ExtProcessControl {
 		}
 		
 		// other
-		ProcessHandle handle = findFastGPSProcess();
-		if (handle == null) {
-			return false;
-		}
-		
-		boolean destroyed = handle.destroy();
-		if (destroyed == false) {
-			destroyed = handle.destroyForcibly();
-		}
+//		ProcessHandle handle = findFastGPSProcess();
+//		if (handle == null) {
+//			return false;
+//		}
+//		
+//		boolean destroyed = handle.destroy();
+//		if (destroyed == false) {
+//			destroyed = handle.destroyForcibly();
+//		}
+		killAllFastGPSProcesses();
 
-		handle = findFastGPSProcess();
+		ProcessHandle handle = findFastGPSProcess();
 		return (handle == null);
 	}
 
@@ -121,7 +128,15 @@ public class ExtProcessControl {
 		return launchProcess();
 	}
 
-	private boolean launchProcess() throws GoniometerException {
+	private synchronized boolean launchProcess() throws GoniometerException {
+//		Thread current = Thread.currentThread();
+//		StackTraceElement[] stack = current.getStackTrace();
+//		String now = PamCalendar.formatTime(System.currentTimeMillis());
+//		System.out.printf("Launch at %s in thread %s\n", now, current.toString());
+//		for (int i = 0; i < stack.length; i++) {
+//			System.out.printf("%s Launch process called from %s:%s:%d\n", now, stack[i].getClassName(), stack[i].getMethodName(), stack[i].getLineNumber());
+//		}
+		
 		ProcessHandle exHandle = findFastGPSProcess();
 		if (exHandle != null) {
 			return true;
@@ -144,6 +159,7 @@ public class ExtProcessControl {
 //			throw new GoniometerException("Goniometer process already running");
 			return true;
 		}
+		killAllFastGPSProcesses();
 		return launchExternally();
 	}
 	/**
@@ -157,23 +173,26 @@ public class ExtProcessControl {
 	 * @return true if successful. 
 	 * @throws GoniometerException
 	 */
-	private boolean launchInternal() throws GoniometerException {
+	private synchronized boolean launchInternal() throws GoniometerException {
+		
+		killAllFastGPSProcesses();
+		
 		ArrayList<String> cmds = null;
 		cmds = generateCommand(true);
 		
 		ProcessBuilder procBuilder = new ProcessBuilder(cmds);
 		try {
-			process = procBuilder.start();
+			internalProcess = procBuilder.start();
 		} catch (IOException e) {
-			process = null;
+			internalProcess = null;
 			throw new GoniometerException("Can't start process: " + e.getMessage());
 		}
-		inputThread = new Thread(new InputStreamMonitor("Input", process.getInputStream()), "Goniometer input stream");
+		inputThread = new Thread(new InputStreamMonitor("Input", internalProcess.getInputStream()), "Goniometer input stream");
 		inputThread.start();
-		errorThread = new Thread(new InputStreamMonitor("Errors", process.getErrorStream()), "Goniometer error stream");
+		errorThread = new Thread(new InputStreamMonitor("Errors", internalProcess.getErrorStream()), "Goniometer error stream");
 		errorThread.start();
 
-		return process != null;
+		return internalProcess != null;
 	}
 	
 	/**
@@ -188,6 +207,8 @@ public class ExtProcessControl {
 		cmds = generateCommand(true);
 		String oneLine = makeOneLineCommand(cmds);
 		processMonitor.systemLine("Starting external FastGPS process:\n\t" + oneLine);
+		// then wait up to 10 seconds to check that it's launched OK. 
+		
 		// need to add command exe to the front of the main list. 
 //		cmds.add(0, "cmd.exe");
 //		cmds.add(1, "/C");
@@ -198,13 +219,38 @@ public class ExtProcessControl {
 			throw new GoniometerException("Unable to launch from desktop: " + e.getMessage());
 		}
 		
-		return true;
+		long tic = System.currentTimeMillis();
+		ProcessHandle procHandle = null;
+		while (System.currentTimeMillis() - tic < 10000) {
+			procHandle = findFastGPSProcess();
+			if (procHandle != null) {
+				break;
+			}
+			try {
+				Thread.sleep(500);
+			} catch (InterruptedException e) {
+			}
+		}
+		if (procHandle == null) {
+			processMonitor.systemLine("Unable to launch " + goniometerControl.getGoniometerParams().fastGPSexe + " externally");
+		}
+		else {
+			String str = String.format("External Process %s launched in %3.1f seconds\n", 
+					goniometerControl.getGoniometerParams().fastGPSexe, (double) (System.currentTimeMillis()-tic)/1000.);
+			processMonitor.systemLine(str);
+		}
+		
+		return procHandle != null;
 	}
 	
 	public String getProcessSummary() {
 		ProcessHandle procHandle = findFastGPSProcess();
 		if (procHandle == null) {
 			return null;
+		}
+		String intext = "externally";
+		if (isInternalProcess()) {
+			intext = "internally";
 		}
 		Info info = procHandle.info();
 		Boolean alive = procHandle.isAlive();
@@ -225,21 +271,44 @@ public class ExtProcessControl {
 				long millis = System.currentTimeMillis() -  startInstant.toEpochMilli();
 				runTime = PamCalendar.formatDuration(millis);
 			}
-			return String.format("Process %s, pid %d, Run time %s", alive ? "running" : "dead", pid, runTime);
+			return String.format("Process %s running %s, pid %d, Run time %s", alive ? "running" : "dead", intext, pid, runTime);
 		}
 	}
 	
 	/**
+	 * Is it an internal process. This can be confusing since not sure if 
+	 * the internalProcess points at the java or at the exe?
+	 * @return
+	 */
+	private boolean isInternalProcess() {
+		if (internalProcess == null) {
+			return false;
+		}
+//		ArrayList<ProcessHandle> procs = findFastJavaProcesses();
+//		for (int i = 0; i < procs.size(); i++) {
+//			ProcessHandle aProc = procs.get(i);
+//			if (aProc == internalProcess.toHandle()) {
+//				return true;
+//			}
+//		}
+//		return false;
+		return internalProcess.isAlive();
+	}
+
+	/**
 	 * For some reason, this needs to be declared outside the find function. 
 	 */
 	private ProcessHandle foundHandle;
+	
 	/**
+	 * 
 	 * Search the process list to find the fastGPS process id. 
 	 * @return -1 if not found, pid otherwise. 
 	 */
 	private ProcessHandle findFastGPSProcess() {
 		foundHandle = null;
 		Stream<ProcessHandle> processes = ProcessHandle.allProcesses();
+		String fastFolder = goniometerControl.getGoniometerParams().fastGPSFolder;
 		processes.forEach(new Consumer<ProcessHandle>() {
 			@Override
 			public void accept(ProcessHandle processHandle) {
@@ -251,10 +320,102 @@ public class ExtProcessControl {
 				if (icmd.toString().contains(goniometerControl.getGoniometerParams().fastGPSexe)) {
 					foundHandle = processHandle;
 				}
+//				if (icmd.toString().contains("java.exe")) {
+////					System.out.println("Java process: " + processHandle);
+//					Optional<String> command = info.command();
+//					if (command.isPresent()) {
+//						String cmd = command.get();
+//						if (cmd.contains(fastFolder)) {
+//							foundHandle = processHandle;
+//						}
+//					}
+//				}
 //				System.out.println(info.command());
 			}
 		});
 		return foundHandle;		
+	}
+
+	/**
+	 * Get a full list of processes associated with FastLoc GPS
+	 * This will include java.exe processes that were in the same folder 
+	 * as FastLocGPS and also any processes with the name FastGPS_Realtime.exe
+	 * @return list of processes. 
+	 */ 
+	private ArrayList<ProcessHandle> findFastJavaProcesses() {
+		ArrayList<ProcessHandle> foundProcs = new ArrayList<>();
+		foundHandle = null;
+		Stream<ProcessHandle> processes = ProcessHandle.allProcesses();
+		String fastFolder = goniometerControl.getGoniometerParams().fastGPSFolder;
+		processes.forEach(new Consumer<ProcessHandle>() {
+			@Override
+			public void accept(ProcessHandle processHandle) {
+				Info info = processHandle.info();
+				Optional<String> icmd = info.command();
+				if (icmd == null) {
+					return;
+				}
+				if (icmd.toString().contains(goniometerControl.getGoniometerParams().fastGPSexe)) {
+					foundHandle = processHandle;
+					foundProcs.add(processHandle);
+				}
+				if (icmd.toString().contains("java.exe")) {
+//					System.out.println("Java process: " + processHandle);
+					Optional<String> command = info.command();
+					if (command.isPresent()) {
+						String cmd = command.get();
+						if (cmd.contains(fastFolder)) {
+							foundHandle = processHandle;
+							foundProcs.add(processHandle);
+						}
+					}
+				}
+				//				System.out.println(info.command());
+			}
+		});
+		return foundProcs;
+	}
+	
+	public synchronized int killAllFastGPSProcesses() {
+		ArrayList<ProcessHandle> allProcs = findFastJavaProcesses();
+//		return 0;
+		long tic = System.currentTimeMillis();
+		int nKill = 0;
+		int nNotDead = 0;
+		for (int i = 0; i < allProcs.size(); i++) {
+			try {
+				boolean killed = allProcs.get(i).destroyForcibly();
+				if (killed) {
+					nKill++;
+				}
+				else {
+					nNotDead ++;
+				}
+			}
+			catch (Exception e) {
+				nNotDead ++;
+			}
+		}
+//		int nNotDead = 0;
+//		while (true) {
+//			if (System.currentTimeMillis() - tic > 10000) {
+//				break;
+//			}
+//			ProcessHandle proc = findFastGPSProcess();
+//			if (proc == null) {
+//				break;
+//			}
+//			boolean killed = proc.destroyForcibly();
+//			if (killed) {
+//				nKill++;
+//			}
+//			else {
+//				nNotDead ++;
+//			}
+//		}
+		internalProcess = null;
+		System.out.printf("FastLocGPS Killed %d processes, unable to kill %d others\n", nKill, nNotDead);
+		return nKill;
 	}
 	
 	/**
@@ -421,7 +582,7 @@ public class ExtProcessControl {
 	 * @param commands
 	 * @return
 	 */
-	private String makeOneLineCommand(ArrayList<String> commands) {
+	public String makeOneLineCommand(ArrayList<String> commands) {
 		if (commands == null || commands.size() == 0) {
 			return null;
 		}
@@ -472,6 +633,13 @@ public class ExtProcessControl {
 			killProcess();
 		}
 		
+	}
+
+	/**
+	 * @return the internalProcess
+	 */
+	public Process getInternalProcess() {
+		return internalProcess;
 	}
 	
 }

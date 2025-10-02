@@ -1,10 +1,14 @@
 package fastlocdisplay.goniometer;
 
+import java.awt.Toolkit;
 import java.awt.Window;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.Serializable;
+import java.util.ArrayList;
 
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
@@ -14,6 +18,7 @@ import PamController.PamControlledUnitSettings;
 import PamController.PamController;
 import PamController.PamSettingManager;
 import PamController.PamSettings;
+import PamView.ClipboardCopier;
 import PamView.dialog.warn.WarnOnce;
 import fastlocdisplay.FastlocViewControl;
 import fastlocdisplay.FastlocViewProcess;
@@ -57,6 +62,7 @@ public class GoniometerControl implements PamSettings, ProcessMonitor {
 		JMenu menu = new JMenu("Goniometer");
 		
 		JMenuItem menuItem = new JMenuItem("Goniometer settings");
+		menuItem.setToolTipText("Control Goniometer COM ports and other settings");
 		menuItem.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -64,11 +70,68 @@ public class GoniometerControl implements PamSettings, ProcessMonitor {
 			}
 		});
 		menu.add(menuItem);
+
 		menu.add(stationsFileManager.getDialogMenuItem(parentFrame));
+		
+		menuItem = new JMenuItem("Copy FastLoc command line");
+		menuItem.setToolTipText("Copy the FastGPS_Realtime launch command to the clipboard");
+		menuItem.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				copyCommandLine(parentFrame);
+			}
+		});
+		menu.add(menuItem);
+		
+		menuItem = new JMenuItem("Kill FastGPS Processes");
+		menuItem.setToolTipText("Kill / Destroy any running fastlog GPS processes");
+		menuItem.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				killFastLocs();
+			}
+		});
+		menu.add(menuItem);
 		
 		return menu;
 	}
 
+	/**
+	 * Kill all FastLoc GPS processes. 
+	 */
+	protected void killFastLocs() {
+		int ans = WarnOnce.showWarning(fastLocControl.getGuiFrame(), "Kill Fastloc", "Are you sure you want to kill all FastGPS_Realtime processes?", WarnOnce.YES_NO_OPTION);
+		if (ans == WarnOnce.OK_OPTION) {
+			processControl.killAllFastGPSProcesses();
+		}
+	}
+
+	/**
+	 * Copy the goniometer command line to the clipboard to make it
+	 * easy for people launching the software manually
+	 * @param frame
+	 */
+	protected void copyCommandLine(Window frame) {
+		ArrayList<String> cmds = null;
+		try {
+			cmds = processControl.generateCommand(true);
+		} catch (GoniometerException e) {
+//			e.printStackTrace();
+			System.out.println("Unable to generate command line");
+			return;
+		}
+		String oneLine = processControl.makeOneLineCommand(cmds);
+//		put it in the clipboard
+		Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+		StringSelection stringSel = new StringSelection(oneLine);
+		clipboard.setContents(stringSel, stringSel);
+		WarnOnce.showNamedWarning("goniCommandString", frame, "Command Copied to Clipboard", oneLine, WarnOnce.WARNING_MESSAGE);
+	}
+
+	/**
+	 * Show the main dialog
+	 * @param parentFrame
+	 */
 	private void showGoniometerDialog(Window parentFrame) {
 		GoniometerParams newSettings = GoniometerDialog.showDialog(parentFrame, goniometerParams);
 		if (newSettings != null) {

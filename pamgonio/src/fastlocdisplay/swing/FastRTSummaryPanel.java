@@ -73,8 +73,18 @@ public class FastRTSummaryPanel {
 				c.gridy++;
 			}
 		}
-
+//		int y = c.gridy;
+//		c.gridy = 0;
+//		c.gridx = 2;
+//		c.gridwidth = 1;
+		c.gridx = 0;
+		c.gridwidth = 3;
+		String changeWarning = "(You may have to kill the FastGPS process from the Settings>Goniometer menu before it will restart in a different mode)";
+		mainPanel.add(new JLabel(changeWarning), c);
+		c.gridy++;
+//		c.gridy = y;
 		c.gridwidth = 1;
+		c.gridx = 0;
 		mainPanel.add(new JLabel("Fast GPS Status: ", JLabel.RIGHT), c);
 		c.gridx++;
 		mainPanel.add(exeSummary = new JLabel(""), c);
@@ -82,6 +92,7 @@ public class FastRTSummaryPanel {
 		c.gridy++;
 		mainPanel.add(new JLabel("Last position: ", JLabel.RIGHT), c);
 		c.gridx++;
+		c.gridwidth = 2;
 		mainPanel.add(lastPosition = new JLabel(""), c);
 		
 		if (PamController.getInstance().getRunMode() == PamController.RUN_NORMAL) {

@@ -33,9 +33,9 @@ public class FastlocViewControl extends PamControlledUnit {
 
 	@Override
 	public JMenuItem createDetectionMenu(Frame parentFrame) {
-		JMenu settingsMenu = new JMenu(getUnitName());
-		settingsMenu.add(goniometerControl.getControlMenuItem(parentFrame));
-		return settingsMenu;
+//		JMenu settingsMenu = new JMenu(getUnitName());
+//		settingsMenu.add(goniometerControl.getControlMenuItem(parentFrame));
+		return goniometerControl.getControlMenuItem(parentFrame);
 	}
 
 	/**

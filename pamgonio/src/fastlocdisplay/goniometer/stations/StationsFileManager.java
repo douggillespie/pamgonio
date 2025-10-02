@@ -32,6 +32,8 @@ public class StationsFileManager {
 	
 	public JMenuItem getDialogMenuItem(Window owner) {
 		JMenuItem menuItem = new JMenuItem("Argos stations ...");
+		String path = goniometerControl.getGoniometerParams().fastGPSFolder;
+		menuItem.setToolTipText("Edit Argos stations file " + path);
 		menuItem.addActionListener(new ActionListener() {
 			
 			@Override

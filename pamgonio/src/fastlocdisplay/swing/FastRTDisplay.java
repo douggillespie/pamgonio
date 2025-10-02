@@ -2,8 +2,13 @@ package fastlocdisplay.swing;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
+import java.awt.PopupMenu;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
+import javax.swing.JMenuItem;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
@@ -42,7 +47,28 @@ public class FastRTDisplay implements UserDisplayComponent {
 		fastRTPanel = new FastRTSummaryPanel(gniometerControl);
 		mainPanel.add(BorderLayout.NORTH, fastRTPanel.getMainPanel());
 		
+		JPopupMenu popMenu = new JPopupMenu();
+		JMenuItem menuItem = new JMenuItem("Clear");
+		menuItem.setToolTipText("Clear all text from window");
+		popMenu.add(menuItem);
+		menuItem.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				clearText();
+			}
+		});
+		mainTextArea.setComponentPopupMenu(popMenu);
+		
 		goniometerControl.setFastRTDisplay(this);
+	}
+
+	protected void clearText() {
+		Document doc = mainTextArea.getDocument();
+		int len = doc.getLength();
+		try {
+			doc.remove(0,len);
+		} catch (BadLocationException e) {
+		}
 	}
 
 	@Override
@@ -82,7 +108,7 @@ public class FastRTDisplay implements UserDisplayComponent {
 		return "Goniometer data";
 	}
 
-	public void goniometerMessage(String type, String line) {
+	public synchronized void goniometerMessage(String type, String line) {
 		long now = System.currentTimeMillis();
 		String t = PamCalendar.formatDBDateTime(now);
 		String txt = String.format("\n%s %s %s", t, type, line);
