@@ -1,5 +1,7 @@
 # PAMGuard Goniometer Module
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.17965495.svg)](https://doi.org/10.5281/zenodo.17965495)
+
 PAMGUard plugin module to interpret and display Fastoc GPS data from a Lotek F6G149A GPS-Argos unit (as part of a suction-cup attached Mixed-Dtag++).
 
 The tag records FastGPS positions and relays them to ARGOS. However, for real time tracking, delivery of data to a tracking vessel via ARGOS can be too slow, so the 
