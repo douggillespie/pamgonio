@@ -143,6 +143,8 @@ public class GoniometerDialog extends PamDialog {
 				browseExecutable();
 			}
 		});
+		
+		setHelpPoint("docs.goniometer");
 	}
 	
 	protected void selectControlRealtime() {
