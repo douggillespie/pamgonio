@@ -890,8 +890,8 @@ final public class PamModel implements PamModelInterface, PamSettings {
 		mi.setToolTipText("Replicates the functionality of User Defined Forms in the IFAW Logger software");
 		mi.setMaxNumber(1);
 
-		mi = PamModuleInfo.registerControlledUnit(FastlocViewControl.class.getName(), "Fastloc tag display");
-		mi.setModulesMenuGroup(mapsGroup);
+//		mi = PamModuleInfo.registerControlledUnit(FastlocViewControl.class.getName(), "Fastloc tag display");
+//		mi.setModulesMenuGroup(mapsGroup);
 		//		}
 
 		//		mi = PamModuleInfo.registerControlledUnit("autecPhones.AutecPhonesControl", "AUTEC Phones");
